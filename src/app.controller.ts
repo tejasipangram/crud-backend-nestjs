@@ -2,8 +2,11 @@ import {
   Body,
   Controller,
   Delete,
+  FileValidator,
   Get,
+  MaxFileSizeValidator,
   Param,
+  ParseFilePipe,
   Post,
   Put,
   UploadedFile,
@@ -15,6 +18,7 @@ import { Simpleresponse } from './simpleresponse/simpleresponse.interface';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path/posix';
+import { FileType } from './validators/Validatefile';
 
 @Controller()
 export class AppController {
@@ -28,7 +32,13 @@ export class AppController {
   @Post()
   @UseInterceptors(FileInterceptor('image'))
   createOne(
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 })],
+      }),
+    )
+    @FileType(['image/jpg', 'image/png'])
+    file: Express.Multer.File,
     @Body() body,
   ): Promise<Crud> {
     return this.appService.create(body, file);
