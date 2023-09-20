@@ -12,7 +12,9 @@ export class Crud {
   description: string;
 
   @Prop()
-  image: string;
+  filePath: string;
+  @Prop()
+  UserId: string;
 }
 
 export const CrudSchema = SchemaFactory.createForClass(Crud);

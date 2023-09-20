@@ -1,14 +1,17 @@
 import {
   Body,
   Controller,
+  DefaultValuePipe,
   Delete,
   FileValidator,
   Get,
   MaxFileSizeValidator,
   Param,
   ParseFilePipe,
+  ParseIntPipe,
   Post,
   Put,
+  Query,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
@@ -19,19 +22,26 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path/posix';
 import { FileType } from './validators/Validatefile';
+import { ParamsTokenFactory } from '@nestjs/core/pipes';
+import { query } from 'express';
 
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
-  @Get()
-  getAllData(): Promise<Crud[]> {
-    return this.appService.getAllData();
+  @Get('read/:userId')
+  getAllData(
+    @Param('userId') userid,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page,
+    @Query('pageSize', new DefaultValuePipe(10), ParseIntPipe) pageSize,
+  ): Promise<Simpleresponse> {
+    return this.appService.getAllData(page, pageSize, userid);
   }
 
-  @Post()
+  @Post('create/:userid')
   @UseInterceptors(FileInterceptor('image'))
   createOne(
+    @Param('userid') userid,
     @UploadedFile(
       new ParseFilePipe({
         validators: [new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 })],
@@ -40,8 +50,8 @@ export class AppController {
     @FileType(['image/jpg', 'image/png'])
     file: Express.Multer.File,
     @Body() body,
-  ): Promise<Crud> {
-    return this.appService.create(body, file);
+  ): Promise<Simpleresponse> {
+    return this.appService.create(body, file, userid);
   }
 
   @Put(':id')
